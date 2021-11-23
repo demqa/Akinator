@@ -105,13 +105,9 @@ TreeStatus TreeIsEmpty(Tree_t *tree)
 TreeStatus NodeInsert(Tree_t *tree, Node_t *node, const ChildNumeration n_child, const Value_t value)
 {
     CATCH_TREE_ERRORS;
-    // CATCH_NODE_ERRORS;
 
-    if (node != nullptr)
-    {
-        // fprintf(stderr, "node at %p, ", node);
-        // fprintf(stderr, "node->value = %s\n", node->value);
-    }
+    if (node == nullptr && node != tree->root)
+        return NODE_PTR_IS_NULL;
 
     Node_t *new_node = (Node_t *) calloc(1, sizeof(Node_t));
     if (new_node == nullptr)
@@ -363,22 +359,33 @@ static TreeStatus NodeDump(const Node_t *node, size_t *number_of_node, FILE *dum
 TreeStatus TreeDump(Tree_t *tree)
 {
     int status = TreeVerify(tree);
-    if (status)
+    if (status && (status & (1 << 9 - 1)) == 0)
     {
         fprintf(TREE_LOG_FILE_DEFAULT, "CANT DUMP, TREE IS RUINED\n");
         
         PRINT_ERROR(BAD_ALLOC);
-        PRINT_ERROR(NODE_PTR_IS_NULL);
+
+        PRINT_ERROR(TREE_IS_NULL);
         PRINT_ERROR(TREE_ROOT_IS_NULL);
+        PRINT_ERROR(NODE_PTR_IS_NULL);
 
         PRINT_ERROR(NODE_PARENT_IS_INVALID);
         PRINT_ERROR(NODE_LEFT___IS_INVALID);
         PRINT_ERROR(NODE_RIGHT__IS_INVALID);
 
         PRINT_ERROR(TREE_ROOT_IS_RUINED);
+        PRINT_ERROR(TREE_CANT_HAVE_THIS_CHILD);
 
-        // return (TreeStatus) status;
-        // UNCOMMENT WHEN RELEASE)))))
+        PRINT_ERROR(NUMBER_OF_NODE_NULL);
+        PRINT_ERROR(DUMP_FILE_IS_NULL);
+
+        PRINT_ERROR(CANT_REMOVE_TREE_ROOT);
+        PRINT_ERROR(CANT_REMOVE_NON_TERMINAL_NODE);
+
+        PRINT_ERROR(UNBELIEVABLE_CASE);
+        PRINT_ERROR(RESULT_IS_UNKNOWN);
+
+        return (TreeStatus) status;
     }
 
     size_t number_of_node = 0;
