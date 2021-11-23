@@ -9,10 +9,10 @@ typedef char * Value_t;
 const size_t COLOR_MAX_LEN = 7 + 1;
 
 const char root_color    [COLOR_MAX_LEN] = "#f4a1f7";
-const char internal_color[COLOR_MAX_LEN] = "#ba092d";
-const char default_color [COLOR_MAX_LEN] = "#6bc79c";
+const char terminal_color[COLOR_MAX_LEN] = "#5ebfff";
+const char default_color [COLOR_MAX_LEN] = "#63e69e";
 
-const char left_color    [COLOR_MAX_LEN] = "#3bfc2d";
+const char left_color    [COLOR_MAX_LEN] = "#3cf71b";
 const char right_color   [COLOR_MAX_LEN] = "#ff0000";
 
 #endif
