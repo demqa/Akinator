@@ -68,7 +68,7 @@ int main()
 
     TreeDtor(&tree);
 
-    TreeDump(&tree);
+    // TreeDump(&tree);
 
     return 0;
 }

@@ -1,3 +1,8 @@
 digraph structs {
     node [color=black, shape=box, style="filled"];
+    node0 [fillcolor="#f4a1f7", label="eblan?"];
+    edge [color="#3cf71b"]; node0 -> node1;
+    node1 [fillcolor="#5ebfff", label="vovka"];
+    edge [color="#ff0000"]; node0 -> node2;
+    node2 [fillcolor="#5ebfff", label="dimka"];
 }
