@@ -4,4 +4,6 @@
 
 #include "akinator_config.h"
 
+#include "BinaryTree/bin_tree.h"
+
 #endif

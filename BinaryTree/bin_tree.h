@@ -2,12 +2,13 @@
 
 #define BIN_TREE_H
 
+#include <stdio.h>
 #include "bin_tree_config.h"
 
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <stdio.h>
+
 #include <sys/stat.h>
 
 struct Node_t
@@ -17,6 +18,7 @@ struct Node_t
     Node_t  *parent;
     Node_t  *left;
     Node_t  *right;
+
 };
 
 enum TreeStatus
@@ -37,5 +39,11 @@ enum TreeStatus
     TREE_ROOT_IS_RUINED     = 1 << 15,
     
 };
+
+TreeStatus NodeCreate(Node_t **node, Node_t *parent, const Value_t value);
+TreeStatus NodeVerify(Node_t *node);
+TreeStatus TreeVerify(Node_t *tree_root);
+
+TreeStatus TreeDump(Node_t *tree_root);
 
 #endif
