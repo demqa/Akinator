@@ -196,7 +196,7 @@ AkinStatus TreeRead(Tree_t *tree, char *buffer, size_t buff_size)
     return FUNC_IS_OK;
 }
 
-AkinStatus TreeFill(Tree_t *tree, FILE *stream)
+AkinStatus TreeFill(Tree_t *tree, FILE *stream, char **buff)
 {
     if (tree == nullptr)
         return TREE_IS_NULL_;
@@ -212,9 +212,10 @@ AkinStatus TreeFill(Tree_t *tree, FILE *stream)
 
     if (ReadBuffer(&buffer, stream))
         return BUFFER_CANT_BE_READ;
+
+    *buff = buffer;
     
     AkinStatus status = TreeRead(tree, buffer, buff_size);
-    free(buffer);
 
     if (status)
         return status;
@@ -262,31 +263,44 @@ AkinStatus TreeOut(Tree_t *tree, const char *out_filename)
         status |= CANT_WRITE_EMPTY_TREE;
     
     status |= NodesOut(tree->root, out);
+    fprintf(out, "\n");
 
     fclose(out);
 
     return (AkinStatus) status;
 }
 
-int main()
+AkinStatus GuessWho/*is back*/(Tree_t *tree)
 {
-    FILE *stream = fopen("tree", "rb");
+
+}
+
+void Play()
+{
+    FILE *stream = fopen("tree_new", "rb");
     if (stream == nullptr)
-        return -1;
+        return;
 
     Tree_t tree = {};
 
     TreeCtor(&tree);
 
-    AkinStatus status = TreeFill(&tree, stream);
+    char *buffer = nullptr;
+    AkinStatus status = TreeFill(&tree, stream, &buffer);
 
     TreeDump(&tree);
 
-    status = TreeOut(&tree, "tree_new");
+    status = TreeOut(&tree, "tree_1");
 
     fprintf(stderr, "status = %d\n", status);
 
     TreeDtor(&tree);
+    free(buffer);
+}
+
+int main()
+{
+    Play();
 
     return 0;
 }
