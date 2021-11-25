@@ -30,6 +30,12 @@ enum AkinStatus
     PTR_BIGGER_BUFF_END           = 1 << 19,
     READ_WAS_UNSUCCESSFUL         = 1 << 20,
     MAX_STRING_LEN_REACHED        = 1 << 21,
+    
+    CANT_OPEN_FILE                = 1 << 22,
+    CANT_WRITE_EMPTY_TREE         = 1 << 23,
+    FILENAME_PTR_IS_NULL          = 1 << 24,
+
+    TREE_IS_DEAD                  = 1 << 25,
 
     FUCK_MY_LIFE                  = 1 << 29,
     PIZDEC                        = 1 << 30,

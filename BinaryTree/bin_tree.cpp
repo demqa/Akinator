@@ -8,7 +8,7 @@ do{                           \
     }                             \
 }while(0);
 
-#define CATCH_NODE_ERRORS            \
+#define CATCH_NODE_ERRORS          \
 do{                                 \
     if (NodeVerify(node))            \
     {                                 \
@@ -405,3 +405,6 @@ TreeStatus TreeDump(Tree_t *tree)
 
     return (TreeStatus) status;
 }
+
+#undef CATCH_NODE_ERRORS
+#undef CATCH_TREE_ERRORS

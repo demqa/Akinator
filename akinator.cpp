@@ -57,7 +57,7 @@ AkinStatus GetString(char **ptr, char *end_ptr, char **string)
     if (*ptr > end_ptr)
         return PTR_BIGGER_BUFF_END;
 
-    *string = (char *) calloc(MAX_STRING_LEN, sizeof(char));
+    *string = *ptr;
     int number = 0;
 
     assert(**ptr != '}');
@@ -78,7 +78,7 @@ AkinStatus GetString(char **ptr, char *end_ptr, char **string)
     assert(number < MAX_STRING_LEN);
 
     if ((*string)[number] != ' ')
-        fprintf(stderr, "WHY YOU CANT JUST PUT SPACES AFTER NAME\n");
+        fprintf(stderr, "WHY YOU CANT JUST PUT SPACE AFTER NAME\n");
 
     (*string)[number] = '\0';
 
@@ -86,7 +86,6 @@ AkinStatus GetString(char **ptr, char *end_ptr, char **string)
     
     return DEAD_INSIDE;
 }
-
 
 #define GO_NEXT_CYCLE(NODE)  \
 do{                           \
@@ -183,7 +182,6 @@ AkinStatus TreeRead(Tree_t *tree, char *buffer, size_t buff_size)
         
         if (counter < 0)
         {
-            // where I have TO DO THIS FUCKING FREE!!!???
             return EXPR_IS_INVALID;
         }
 
@@ -216,13 +214,59 @@ AkinStatus TreeFill(Tree_t *tree, FILE *stream)
         return BUFFER_CANT_BE_READ;
     
     AkinStatus status = TreeRead(tree, buffer, buff_size);
+    free(buffer);
+
     if (status)
         return status;
 
     return FUNC_IS_OK;
 }
 
-int test0();
+AkinStatus NodesOut(Node_t *node, FILE *stream)
+{
+    if (stream == nullptr)
+        return STREAM_IS_NULL;
+
+    if (node == nullptr)
+        return NODE_PTR_IS_NULL_;
+
+    int status = FUNC_IS_OK;
+    fprintf(stream, "{");
+    fprintf(stream, node->value);
+    fprintf(stream, " ");
+
+    if (node->left  != nullptr) status |= NodesOut(node->left,  stream);
+    if (node->right != nullptr) status |= NodesOut(node->right, stream);
+
+    fprintf(stream, "}");
+
+    return (AkinStatus) status;
+}
+
+AkinStatus TreeOut(Tree_t *tree, const char *out_filename)
+{
+    if (TreeVerify(tree))
+    {
+        // TreeDump(tree);
+        return TREE_IS_DEAD;
+    }
+
+    if (out_filename == nullptr) return FILENAME_PTR_IS_NULL;
+
+    FILE *out = fopen(out_filename, "w");
+    if (out == nullptr)
+        return CANT_OPEN_FILE;
+
+    int status = FUNC_IS_OK;
+    if (tree->root == nullptr)
+        status |= CANT_WRITE_EMPTY_TREE;
+    
+    status |= NodesOut(tree->root, out);
+
+    fclose(out);
+
+    return (AkinStatus) status;
+}
 
 int main()
 {
@@ -238,73 +282,11 @@ int main()
 
     TreeDump(&tree);
 
+    status = TreeOut(&tree, "tree_new");
+
     fprintf(stderr, "status = %d\n", status);
-
-    return 0;
-}
-
-int test0()
-{
-    Tree_t tree = {};
-
-    TreeCtor(&tree);
-
-    NodeInsert(&tree, tree.root, L_CHILD, "eblan?");
-    // TreeDump(&tree);
-    NodeInsert(&tree, tree.root, L_CHILD, "vovka");
-    // TreeDump(&tree);
-    NodeInsert(&tree, tree.root, R_CHILD, "dimka");
-    // TreeDump(&tree);
-
-    TreeDump(&tree);
 
     TreeDtor(&tree);
 
-    return 0;
-}
-
-int test()
-{
-    // Node_t *root = nullptr;
-
-    // NodeCreate(&root, nullptr, "1234");
-    
-    // TreeDump(root);
-
-    
-
-    // Node_t *topNode = (Node_t *)calloc (1, sizeof (Node_t));
-    // scanf ("%ms", &(topNode->value));
-
-    // Node_t *leftNode = (Node_t *)calloc (1, sizeof (Node_t));
-    // scanf ("%ms", &(leftNode->value));
-
-    // Node_t *rightNode = (Node_t *)calloc (1, sizeof (Node_t));
-    // scanf ("%ms", &(rightNode->value));
-
-    // topNode->left = leftNode;
-
-    // topNode->right = rightNode;
-
-    // Node_t *leftleftNode = (Node_t *)calloc (1, sizeof (Node_t));
-    // scanf ("%ms", &(leftleftNode->value));
-
-    // Node_t *leftrightNode = (Node_t *)calloc (1, sizeof (Node_t));
-    // scanf ("%ms", &(leftrightNode->value));
-
-    // topNode->left->left = leftleftNode;
-    // topNode->left->right = leftrightNode;
-
-    // Node_t *rightleftNode = (Node_t *)calloc (1, sizeof (Node_t));
-    // scanf ("%ms", &(rightleftNode->value));
-
-    // Node_t *rightrightNode = (Node_t *)calloc (1, sizeof (Node_t));
-    // scanf ("%ms", &(rightrightNode->value));
-
-    // topNode->right->left = rightleftNode;
-    // topNode->right->right = rightrightNode;
-
-    // TreeStatus status = TreeDump(topNode);
-    // printf("status = %d\n", status);
     return 0;
 }
