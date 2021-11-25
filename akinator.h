@@ -29,6 +29,7 @@ enum AkinStatus
     PTR_IS_NULL                   = 1 << 18,
     PTR_BIGGER_BUFF_END           = 1 << 19,
     READ_WAS_UNSUCCESSFUL         = 1 << 20,
+    MAX_STRING_LEN_REACHED        = 1 << 21,
 
     FUCK_MY_LIFE                  = 1 << 29,
     PIZDEC                        = 1 << 30,

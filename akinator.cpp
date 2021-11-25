@@ -50,9 +50,6 @@ int ReadBuffer(char **buffer, FILE *stream)
     return 0;
 }
 
-// read tree
-// write tree
-
 AkinStatus GetString(char **ptr, char *end_ptr, char **string)
 {
     if (ptr == nullptr || *ptr == nullptr || end_ptr == nullptr) return PTR_IS_NULL;
@@ -61,14 +58,31 @@ AkinStatus GetString(char **ptr, char *end_ptr, char **string)
         return PTR_BIGGER_BUFF_END;
 
     *string = (char *) calloc(MAX_STRING_LEN, sizeof(char));
-    int number = 0, check = 0;
+    int number = 0;
 
-    int count = sscanf(*ptr, " %s %n}", *string, &number);
-    if (count <= 0 || number == 0)
-        return GABELLA;
+    assert(**ptr != '}');
 
-    (*ptr) += number;
-    assert(*ptr <= end_ptr);
+    while (*(*ptr + 1) != '}' && *(*ptr + 1) != '{')
+    {
+        if (*ptr + 1 >= end_ptr)
+            return GABELLA;
+
+        if (number + 1 >= MAX_STRING_LEN)
+            return MAX_STRING_LEN_REACHED;
+
+        (*string)[number++] = **ptr;
+
+        (*ptr)++;
+    }
+
+    assert(number < MAX_STRING_LEN);
+
+    if ((*string)[number] != ' ')
+        fprintf(stderr, "WHY YOU CANT JUST PUT SPACES AFTER NAME\n");
+
+    (*string)[number] = '\0';
+
+    assert(*ptr < end_ptr);
     
     return DEAD_INSIDE;
 }
@@ -94,15 +108,17 @@ AkinStatus TreeReadProcessing(Tree_t *tree, Node_t *node, char **ptr, char *end_
     if (**ptr == '{')
     {        
         (*ptr)++;
+
         GO_NEXT_CYCLE(node);
     }
 
     if (*ptr < end_ptr && **ptr == '}')
     {
-        (*ptr)++;
         if (node == nullptr)
             return FUCK_MY_LIFE;
         
+        (*ptr)++;
+
         if (node->parent != nullptr)
             GO_NEXT_CYCLE(node->parent);
     }
@@ -114,6 +130,8 @@ AkinStatus TreeReadProcessing(Tree_t *tree, Node_t *node, char **ptr, char *end_
         status = GetString(ptr, end_ptr, &string);
         if (status)
             return status;
+
+        (*ptr)++;
 
         if (node == nullptr)
         {
