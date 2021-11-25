@@ -1,6 +1,9 @@
 #include "akinator.h"
+#include "debug_lib.h"
 
-static int Filesize(FILE *stream, size_t *filesize)
+#define HELLO do{ fprintf(stderr, "i'm at line №%d.\n", __LINE__); }while(0);
+
+int Filesize(FILE *stream, size_t *filesize)
 {
     if (stream == nullptr)
         return -1;
@@ -14,11 +17,10 @@ static int Filesize(FILE *stream, size_t *filesize)
     return 0;
 }
 
-static int ReadBuffer(char **buffer, FILE *stream)
+int ReadBuffer(char **buffer, FILE *stream)
 {
-    if (stream == nullptr){
+    if (stream == nullptr)
         return -1;
-    }
 
     size_t filesize = 0;
     if (Filesize(stream, &filesize))
@@ -41,7 +43,7 @@ static int ReadBuffer(char **buffer, FILE *stream)
         return -4;
     }
 
-    *buffer[filesize] = '\0';
+    (*buffer)[filesize] = '\0';
 
     fclose(stream);
 
@@ -51,7 +53,179 @@ static int ReadBuffer(char **buffer, FILE *stream)
 // read tree
 // write tree
 
+AkinStatus GetString(char **ptr, char *end_ptr, char **string)
+{
+    if (ptr == nullptr || *ptr == nullptr || end_ptr == nullptr) return PTR_IS_NULL;
+
+    if (*ptr > end_ptr)
+        return PTR_BIGGER_BUFF_END;
+
+    *string = (char *) calloc(MAX_STRING_LEN, sizeof(char));
+    int number = 0, check = 0;
+
+    int count = sscanf(*ptr, " %s %n}", *string, &number);
+    if (count <= 0 || number == 0)
+        return GABELLA;
+
+    (*ptr) += number;
+    assert(*ptr <= end_ptr);
+    
+    return DEAD_INSIDE;
+}
+
+
+#define GO_NEXT_CYCLE(NODE)  \
+do{                           \
+    status = TreeReadProcessing(tree, (NODE), ptr, end_ptr); \
+    if (status)                 \
+        return status;           \
+}while(0);
+
+AkinStatus TreeReadProcessing(Tree_t *tree, Node_t *node, char **ptr, char *end_ptr)
+{
+    if (tree == nullptr)   return TREE_IS_NULL_;
+    
+    if (ptr  == nullptr || *ptr == nullptr || end_ptr == nullptr) return PTR_IS_NULL;
+
+    if (*ptr > end_ptr)    return PTR_BIGGER_BUFF_END;
+
+    AkinStatus status = FUNC_IS_OK;
+
+    if (**ptr == '{')
+    {        
+        (*ptr)++;
+        GO_NEXT_CYCLE(node);
+    }
+
+    if (*ptr < end_ptr && **ptr == '}')
+    {
+        (*ptr)++;
+        if (node == nullptr)
+            return FUCK_MY_LIFE;
+        
+        if (node->parent != nullptr)
+            GO_NEXT_CYCLE(node->parent);
+    }
+    
+    if (*ptr < end_ptr && **ptr != '{' && **ptr != '}')
+    {
+        char *string = nullptr;
+
+        status = GetString(ptr, end_ptr, &string);
+        if (status)
+            return status;
+
+        if (node == nullptr)
+        {
+            assert(tree->root == node && tree->size == 0);
+
+            NodeInsert(tree, node, L_CHILD, string);
+            
+            GO_NEXT_CYCLE(tree->root);
+        }
+        else
+        if (node->left == nullptr)
+        {
+            NodeInsert(tree, node, L_CHILD, string);
+
+            GO_NEXT_CYCLE(node->left);
+        }
+        else
+        {
+            NodeInsert(tree, node, R_CHILD, string);
+
+            GO_NEXT_CYCLE(node->right);
+        }
+    }
+
+    if (*ptr != end_ptr) return READ_WAS_UNSUCCESSFUL;
+
+    return READ_SUCCS;
+}
+
+AkinStatus TreeRead(Tree_t *tree, char *buffer, size_t buff_size)
+{
+    if (tree == nullptr)   return TREE_IS_NULL_;
+
+    if (buffer == nullptr) return BUFFER_IS_NULLPTR;
+
+    if (buff_size == 0)    return FILESIZE_IS_ZERO;
+
+    char *ptr     = buffer;
+    char *end_ptr = buffer + buff_size - 1;
+
+    int counter = 0;
+    while (ptr <= end_ptr)
+    {
+        if (*ptr == '{')
+            counter++;
+
+        if (*ptr == '}')
+            counter--;
+        
+        if (counter < 0)
+        {
+            // where I have TO DO THIS FUCKING FREE!!!???
+            return EXPR_IS_INVALID;
+        }
+
+        ptr++;
+    }
+
+    ptr = buffer;
+    AkinStatus status = TreeReadProcessing(tree, tree->root, &ptr, end_ptr);
+    if (status)
+        return status;
+    
+    return FUNC_IS_OK;
+}
+
+AkinStatus TreeFill(Tree_t *tree, FILE *stream)
+{
+    if (tree == nullptr)
+        return TREE_IS_NULL_;
+
+    if (stream == nullptr)
+        return STREAM_IS_NULL;
+    
+    size_t buff_size = 0;
+    if (Filesize(stream, &buff_size))
+        return FILESIZE_IS_ZERO;
+
+    char *buffer = nullptr;
+
+    if (ReadBuffer(&buffer, stream))
+        return BUFFER_CANT_BE_READ;
+    
+    AkinStatus status = TreeRead(tree, buffer, buff_size);
+    if (status)
+        return status;
+
+    return FUNC_IS_OK;
+}
+
+int test0();
+
 int main()
+{
+    FILE *stream = fopen("tree", "rb");
+    if (stream == nullptr)
+        return -1;
+
+    Tree_t tree = {};
+
+    TreeCtor(&tree);
+
+    AkinStatus status = TreeFill(&tree, stream);
+
+    TreeDump(&tree);
+
+    fprintf(stderr, "status = %d\n", status);
+
+    return 0;
+}
+
+int test0()
 {
     Tree_t tree = {};
 
@@ -67,8 +241,6 @@ int main()
     TreeDump(&tree);
 
     TreeDtor(&tree);
-
-    // TreeDump(&tree);
 
     return 0;
 }

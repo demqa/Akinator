@@ -25,7 +25,7 @@ enum TreeStatus
  
     NODE_IS_DTORED                = 1 << 4,
     NODE_IS_TERMINAL              = 1 << 5,
-                 
+
     // errors             
     BAD_ALLOC                     = 1 << 9,
  
