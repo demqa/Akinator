@@ -56,6 +56,57 @@ void sleep(int milliseconds)
     while (clock() < time_end) ;
 }
 
+struct MemoryDefender
+{
+    size_t size;
+    size_t capacity;
+    char **allocs;
+};
+
+int DefenderCtor  (MemoryDefender *defender)
+{
+    if (defender == nullptr) return -1;
+
+    defender->allocs   = (char **) calloc(MAX_ALLOCS, sizeof(char *));
+    defender->capacity = MAX_ALLOCS;
+    defender->size     = 0;
+
+    return 0;
+}
+
+int DefenderPush  (MemoryDefender *defender, char *memory)
+{
+    if (defender == nullptr) return -1;
+    
+    if (memory   == nullptr) return -2;
+
+    defender->allocs[defender->size++] = memory;
+
+    return 0;
+}
+
+int DefenderDtor  (MemoryDefender *defender)
+{
+    if (defender == nullptr) return -1;
+
+    defender->size = 0;
+    defender->capacity = 0;
+
+    for (size_t iter = 0; iter < defender->size; iter++)
+        free(defender->allocs[iter]);
+    
+    free(defender->allocs);
+
+    return 0;
+}
+
+int DefenderIsFull(MemoryDefender *defender)
+{
+    if (defender == nullptr) return -1;
+
+    return (defender->size >= defender->capacity) ? 1 : 0;
+}
+
 AkinStatus GetString(char **ptr, char *end_ptr, char **string)
 {
     if (ptr == nullptr || *ptr == nullptr || end_ptr == nullptr) return PTR_IS_NULL;
@@ -63,8 +114,8 @@ AkinStatus GetString(char **ptr, char *end_ptr, char **string)
     if (*ptr > end_ptr)
         return PTR_BIGGER_BUFF_END;
 
-    *string = *ptr;
-    int number = 0;
+    *string    = *ptr;
+    int number =  0;
 
     assert(**ptr != '}');
 
@@ -93,13 +144,6 @@ AkinStatus GetString(char **ptr, char *end_ptr, char **string)
     return DEAD_INSIDE;
 }
 
-#define GO_NEXT_CYCLE(NODE)  \
-do{                           \
-    status = TreeReadProcessing(tree, (NODE), ptr, end_ptr); \
-    if (status)                 \
-        return status;           \
-}while(0);
-
 AkinStatus TreeReadProcessing(Tree_t *tree, Node_t *node, char **ptr, char *end_ptr)
 {
     if (tree == nullptr)   return TREE_IS_NULL_;
@@ -108,62 +152,55 @@ AkinStatus TreeReadProcessing(Tree_t *tree, Node_t *node, char **ptr, char *end_
 
     if (*ptr > end_ptr)    return PTR_BIGGER_BUFF_END;
 
-    AkinStatus status = FUNC_IS_OK;
+    int status = FUNC_IS_OK;
 
-    if (**ptr == '{')
-    {        
-        (*ptr)++;
-
-        GO_NEXT_CYCLE(node);
-    }
-
-    if (*ptr < end_ptr && **ptr == '}')
+    while (*ptr <= end_ptr)
     {
-        if (node == nullptr)
-            return FUCK_MY_LIFE;
-        
-        (*ptr)++;
+        if (**ptr == '{')
+        {
+            (*ptr)++;
 
-        if (node->parent != nullptr)
-            GO_NEXT_CYCLE(node->parent);
+            char *string = nullptr;
+            status |= GetString(ptr, end_ptr, &string);
+            if (status) return (AkinStatus) status;
+            
+            (*ptr)++;
+
+            if (node == nullptr)
+            {
+                NodeInsert(tree, node, L_CHILD, string);
+                node = tree->root;
+            }
+            else
+            if (node->left == nullptr)
+            {
+                NodeInsert(tree, node, L_CHILD, string);
+                node = node->left;
+            }
+            else
+            {
+                NodeInsert(tree, node, R_CHILD, string);
+                node = node->right;
+            }
+        }
+        else
+        if (**ptr == '}')
+        {
+            if (node == nullptr)   return FUCK_MY_LIFE;
+
+            (*ptr)++;
+
+            if (node == tree->root)
+            {
+                // (*ptr) = end_ptr + 1;   // soft
+                break;                    // horny
+            }
+
+            node = node->parent;
+        }
     }
     
-    if (*ptr < end_ptr && **ptr != '{' && **ptr != '}')
-    {
-        char *string = nullptr;
-
-        status = GetString(ptr, end_ptr, &string);
-        if (status)
-            return status;
-
-        (*ptr)++;
-
-        if (node == nullptr)
-        {
-            assert(tree->root == node && tree->size == 0);
-
-            NodeInsert(tree, node, L_CHILD, string);
-            
-            GO_NEXT_CYCLE(tree->root);
-        }
-        else
-        if (node->left == nullptr)
-        {
-            NodeInsert(tree, node, L_CHILD, string);
-
-            GO_NEXT_CYCLE(node->left);
-        }
-        else
-        {
-            NodeInsert(tree, node, R_CHILD, string);
-
-            GO_NEXT_CYCLE(node->right);
-        }
-    }
-
-    if (*ptr != end_ptr) return READ_WAS_UNSUCCESSFUL;
-
-    return READ_SUCCS;
+    return DEAD_INSIDE;
 }
 
 AkinStatus TreeRead(Tree_t *tree, char *buffer, size_t buff_size)
@@ -231,7 +268,7 @@ AkinStatus NodesOut(Node_t *node, FILE *stream)
 {
     if (stream == nullptr) return STREAM_IS_NULL;
 
-    if (node == nullptr)   return NODE_PTR_IS_NULL_;
+    if (node   == nullptr) return NODE_PTR_IS_NULL_;
 
     int status = FUNC_IS_OK;
     fprintf(stream, "{");
@@ -306,57 +343,6 @@ AkinStatus LineGet(char **string)
     return DEAD_INSIDE;
 }
 
-struct MemoryDefender
-{
-    size_t size;
-    size_t capacity;
-    char **allocs;
-};
-
-int DefenderCtor  (MemoryDefender *defender)
-{
-    if (defender == nullptr) return -1;
-
-    defender->allocs   = (char **) calloc(MAX_ALLOCS, sizeof(char *));
-    defender->capacity = MAX_ALLOCS;
-    defender->size     = 0;
-
-    return 0;
-}
-
-int DefenderPush  (MemoryDefender *defender, char *memory)
-{
-    if (defender == nullptr) return -1;
-    
-    if (memory   == nullptr) return -2;
-
-    defender->allocs[defender->size++] = memory;
-
-    return 0;
-}
-
-int DefenderDtor  (MemoryDefender *defender)
-{
-    if (defender == nullptr) return -1;
-
-    defender->size = 0;
-    defender->capacity = 0;
-
-    for (size_t iter = 0; iter < defender->size; iter++)
-        free(defender->allocs[iter]);
-    
-    free(defender->allocs);
-
-    return 0;
-}
-
-int DefenderIsFull(MemoryDefender *defender)
-{
-    if (defender == nullptr) return -1;
-
-    return (defender->size >= defender->capacity) ? 1 : 0;
-}
-
 AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
 {
     if (TreeVerify(tree))
@@ -375,7 +361,8 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
     {
         assert(tree->size == 0 && tree->root == nullptr);
 
-        NodeInsert(tree, tree->root, L_CHILD, "Неизвестно кто");
+        NodeInsert(tree, node, L_CHILD, initial_elem);
+        node = tree->root;
     }
 
     while (NodeIsTerminal(node) != NODE_IS_TERMINAL)
@@ -409,8 +396,11 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
     }
     else
     {
-        printf("Чел, ты...\n");
-        sleep(100);
+        printf("Чеeeл...");
+        sleep(500);
+
+        printf("ты...\n");
+        sleep(300);
 
         printf("Ладно, рассказывай...\n");
         sleep(300);
@@ -429,7 +419,7 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
         DefenderPush(defender, node_left_string);
 
         printf("И чем же %s отличается от %s?\n", node_left_string, node->value);
-
+                                           // \n
         printf("На размышление дается 5 секунд.\n");
 
         char *characteristic = nullptr;
@@ -481,7 +471,9 @@ void Play()
     TreeCtor(&tree);
 
     char *buffer = nullptr;
+
     int   status = TreeFill(&tree, stream, &buffer);
+    PRINT_D(status);
 
     MemoryDefender defender = {};
 
