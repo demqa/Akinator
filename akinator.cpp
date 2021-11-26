@@ -50,6 +50,12 @@ int ReadBuffer(char **buffer, FILE *stream)
     return 0;
 }
 
+void sleep(int milliseconds)
+{
+    clock_t time_end = clock() + milliseconds * CLOCKS_PER_SEC / 1000;
+    while (clock() < time_end) ;
+}
+
 AkinStatus GetString(char **ptr, char *end_ptr, char **string)
 {
     if (ptr == nullptr || *ptr == nullptr || end_ptr == nullptr) return PTR_IS_NULL;
@@ -198,11 +204,9 @@ AkinStatus TreeRead(Tree_t *tree, char *buffer, size_t buff_size)
 
 AkinStatus TreeFill(Tree_t *tree, FILE *stream, char **buff)
 {
-    if (tree == nullptr)
-        return TREE_IS_NULL_;
+    if (tree == nullptr)   return TREE_IS_NULL_;
 
-    if (stream == nullptr)
-        return STREAM_IS_NULL;
+    if (stream == nullptr) return STREAM_IS_NULL;
     
     size_t buff_size = 0;
     if (Filesize(stream, &buff_size))
@@ -225,11 +229,9 @@ AkinStatus TreeFill(Tree_t *tree, FILE *stream, char **buff)
 
 AkinStatus NodesOut(Node_t *node, FILE *stream)
 {
-    if (stream == nullptr)
-        return STREAM_IS_NULL;
+    if (stream == nullptr) return STREAM_IS_NULL;
 
-    if (node == nullptr)
-        return NODE_PTR_IS_NULL_;
+    if (node == nullptr)   return NODE_PTR_IS_NULL_;
 
     int status = FUNC_IS_OK;
     fprintf(stream, "{");
@@ -248,7 +250,7 @@ AkinStatus TreeOut(Tree_t *tree, const char *out_filename)
 {
     if (TreeVerify(tree))
     {
-        // TreeDump(tree);
+        TreeDump(tree);
         return TREE_IS_DEAD;
     }
 
@@ -270,14 +272,134 @@ AkinStatus TreeOut(Tree_t *tree, const char *out_filename)
     return (AkinStatus) status;
 }
 
+AkinStatus LineGet(char **string)
+{
+    if (string  == nullptr) return PTR_IS_NULL;
+
+    if (*string != nullptr) return CANT_ALLOC_USED_PTR;
+
+    *string = (char *) calloc(MAX_STRING_LEN, sizeof(char));
+    if (*string == nullptr) return BAD_ALLOC_;
+
+    char *ptr = fgets(*string, MAX_STRING_LEN, stdin);
+    if (ptr == nullptr)
+    {
+        free(*string);
+        return READ_WAS_UNSUCCESSFUL;
+    };
+
+    // HAHAHHAHAHAHAH
+    if (strchr(ptr, '\n') == nullptr)
+    {
+        free(*string);
+        return READ_WAS_UNSUCCESSFUL;
+    }
+
+    *(strchr(ptr, '\n')) = '\0';
+
+    *string = ptr;
+
+    return DEAD_INSIDE;
+}
+
 AkinStatus GuessWho/*is back*/(Tree_t *tree)
 {
+    if (TreeVerify(tree))
+    {
+        TreeDump(tree);
+        return TREE_IS_DEAD;
+    }
 
+    int status = FUNC_IS_OK;
+
+    Node_t *node = tree->root;
+
+    if (node == nullptr)
+    {
+        assert(tree->size == 0 && tree->root == nullptr);
+
+        NodeInsert(tree, tree->root, L_CHILD, "Неизвестно кто");
+    }
+
+    while (NodeIsTerminal(node) != NODE_IS_TERMINAL)
+    {
+        printf("Ваш персонаж %s?([y]es/[*]no)\n", node->value);
+
+        char c = getchar();
+        getchar();
+
+        if (c == 'y')
+            node = node->left;
+        else
+            node = node->right;
+    }
+
+    assert(NodeIsTerminal(node) == NODE_IS_TERMINAL);
+
+    printf("Не мешай...\n");
+    sleep(500);
+
+    printf("Это %s?([y]es/[*]no)\n", node->value);
+
+    char c = getchar();
+    getchar();
+
+    if (c == 'y')
+    {
+        printf("Пфф...");
+        sleep(500);
+        printf(" очевидно.\n");
+    }
+    else
+    {
+        printf("Чел, ты...\n");
+        sleep(100);
+
+        printf("Ладно, рассказывай...\n");
+        sleep(300);
+
+        printf("Кто это?\n");
+
+        char *node_left = nullptr;
+        status |= LineGet(&node_left);
+
+        printf("И чем же %s отличается от %s?\n", node_left, node->value);
+
+        printf("На размышление дается 5 секунд.\n");
+
+        char *characteristic = nullptr;
+        status |= LineGet(&characteristic);
+
+        // addition
+        char *node_right = node->value;
+
+        node->value = characteristic;
+
+        NodeInsert(tree, node, L_CHILD, node_left);
+        NodeInsert(tree, node, R_CHILD, node_right);
+
+        printf("Так уж и быть... даю тебе еще попытку...\n");
+        printf("Воспользоваться?(y/n)\n");
+
+        c = getchar();
+        getchar();
+
+        if (c == 'y')
+        {
+            return GuessWho(tree);
+        }
+        else
+        {
+            printf("Ну и отстань!(((\n");
+        }
+    }
+
+    return (AkinStatus) status;
 }
 
 void Play()
 {
-    FILE *stream = fopen("tree_new", "rb");
+    FILE *stream = fopen("tree", "rb");
     if (stream == nullptr)
         return;
 
@@ -286,13 +408,42 @@ void Play()
     TreeCtor(&tree);
 
     char *buffer = nullptr;
-    AkinStatus status = TreeFill(&tree, stream, &buffer);
+    int   status = TreeFill(&tree, stream, &buffer);
 
-    TreeDump(&tree);
+    char c = 'p';
+    while (c != 'e')
+    {
+        printf("Чё нада? [s]ave/[d]ump/[e]xit/play\n");
+        c = getchar();
+        getchar();
 
-    status = TreeOut(&tree, "tree_1");
+        switch (c)
+        {
+            case 's':
+                TreeOut(&tree, "tree");
+                break;
 
-    fprintf(stderr, "status = %d\n", status);
+            case 'd':
+                TreeDump(&tree);
+                break;
+
+            case 'e':
+                printf("Ну и катись отсюда...");
+                fflush(stdout);
+                sleep(1000);
+                printf(" лох\n");
+                break;
+
+            default:
+                status |= GuessWho(&tree);
+        }
+    }
+
+    // TreeDump(&tree);
+
+    // status = TreeOut(&tree, "tree_");
+
+    // fprintf(stderr, "status = %d\n", status);
 
     TreeDtor(&tree);
     free(buffer);

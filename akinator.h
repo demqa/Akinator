@@ -2,6 +2,8 @@
 
 #define AKINATOR_H
 
+#include <time.h>
+
 #include "akinator_config.h"
 
 #include "BinaryTree/bin_tree.h"
@@ -16,6 +18,8 @@ enum AkinStatus
     DEAD_INSIDE         = 0,
 
     // errors
+
+    BAD_ALLOC_                    = 1 << 9,
 
     TREE_IS_NULL_                 = 1 << 10,
     TREE_ROOT_IS_NULL_            = 1 << 11,
@@ -35,7 +39,9 @@ enum AkinStatus
     CANT_WRITE_EMPTY_TREE         = 1 << 23,
     FILENAME_PTR_IS_NULL          = 1 << 24,
 
-    TREE_IS_DEAD                  = 1 << 25,
+    CANT_ALLOC_USED_PTR           = 1 << 25,
+
+    TREE_IS_DEAD                  = 1 << 26,
 
     FUCK_MY_LIFE                  = 1 << 29,
     PIZDEC                        = 1 << 30,
