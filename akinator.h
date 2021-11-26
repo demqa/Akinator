@@ -8,8 +8,6 @@
 
 #include "BinaryTree/bin_tree.h"
 
-const size_t MAX_STRING_LEN = 100;
-
 enum AkinStatus
 {
     // statuses
@@ -42,6 +40,8 @@ enum AkinStatus
     CANT_ALLOC_USED_PTR           = 1 << 25,
 
     TREE_IS_DEAD                  = 1 << 26,
+
+    DEFENDER_IS_NULLPTR           = 1 << 27,
 
     FUCK_MY_LIFE                  = 1 << 29,
     PIZDEC                        = 1 << 30,

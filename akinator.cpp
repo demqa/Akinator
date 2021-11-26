@@ -278,37 +278,94 @@ AkinStatus LineGet(char **string)
 
     if (*string != nullptr) return CANT_ALLOC_USED_PTR;
 
-    *string = (char *) calloc(MAX_STRING_LEN, sizeof(char));
+    *string     = (char *) calloc(MAX_STRING_LEN, sizeof(char));
     if (*string == nullptr) return BAD_ALLOC_;
 
-    char *ptr = fgets(*string, MAX_STRING_LEN, stdin);
-    if (ptr == nullptr)
-    {
-        free(*string);
-        return READ_WAS_UNSUCCESSFUL;
-    };
+    char   c    = 'd';
+    size_t ptr  =  0;
 
-    // HAHAHHAHAHAHAH
-    if (strchr(ptr, '\n') == nullptr)
+    while (true)
     {
-        free(*string);
-        return READ_WAS_UNSUCCESSFUL;
+        if (ptr == MAX_STRING_LEN)
+        {
+            free(*string);
+            return READ_WAS_UNSUCCESSFUL;
+        }
+
+        c = getchar();
+        if (c == '\n')
+        {
+            (*string)[ptr] = '\0';
+            return FUNC_IS_OK;
+        }
+
+        (*string)[ptr++] = c;
     }
 
-    *(strchr(ptr, '\n')) = '\0';
-
-    *string = ptr;
-
+    assert(false);
     return DEAD_INSIDE;
 }
 
-AkinStatus GuessWho/*is back*/(Tree_t *tree)
+struct MemoryDefender
+{
+    size_t size;
+    size_t capacity;
+    char **allocs;
+};
+
+int DefenderCtor  (MemoryDefender *defender)
+{
+    if (defender == nullptr) return -1;
+
+    defender->allocs   = (char **) calloc(MAX_ALLOCS, sizeof(char *));
+    defender->capacity = MAX_ALLOCS;
+    defender->size     = 0;
+
+    return 0;
+}
+
+int DefenderPush  (MemoryDefender *defender, char *memory)
+{
+    if (defender == nullptr) return -1;
+    
+    if (memory   == nullptr) return -2;
+
+    defender->allocs[defender->size++] = memory;
+
+    return 0;
+}
+
+int DefenderDtor  (MemoryDefender *defender)
+{
+    if (defender == nullptr) return -1;
+
+    defender->size = 0;
+    defender->capacity = 0;
+
+    for (size_t iter = 0; iter < defender->size; iter++)
+        free(defender->allocs[iter]);
+    
+    free(defender->allocs);
+
+    return 0;
+}
+
+int DefenderIsFull(MemoryDefender *defender)
+{
+    if (defender == nullptr) return -1;
+
+    return (defender->size >= defender->capacity) ? 1 : 0;
+}
+
+AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
 {
     if (TreeVerify(tree))
     {
         TreeDump(tree);
         return TREE_IS_DEAD;
     }
+
+    if (defender == nullptr) return DEFENDER_IS_NULLPTR;
 
     int status = FUNC_IS_OK;
 
@@ -360,23 +417,39 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree)
 
         printf("Кто это?\n");
 
-        char *node_left = nullptr;
-        status |= LineGet(&node_left);
+        char *node_left_string = nullptr;
+        status |= LineGet(&node_left_string);
 
-        printf("И чем же %s отличается от %s?\n", node_left, node->value);
+        if (DefenderIsFull(defender))
+        {
+            free(node_left_string);
+            return GABELLA;
+        }
+
+        DefenderPush(defender, node_left_string);
+
+        printf("И чем же %s отличается от %s?\n", node_left_string, node->value);
 
         printf("На размышление дается 5 секунд.\n");
 
         char *characteristic = nullptr;
         status |= LineGet(&characteristic);
+        
+        if (DefenderIsFull(defender))
+        {
+            free(characteristic);
+            return GABELLA;
+        }
+
+        DefenderPush(defender, characteristic);
 
         // addition
-        char *node_right = node->value;
+        char *node_right_string = node->value;
 
         node->value = characteristic;
 
-        NodeInsert(tree, node, L_CHILD, node_left);
-        NodeInsert(tree, node, R_CHILD, node_right);
+        NodeInsert(tree, node, L_CHILD, node_left_string);
+        NodeInsert(tree, node, R_CHILD, node_right_string);
 
         printf("Так уж и быть... даю тебе еще попытку...\n");
         printf("Воспользоваться?(y/n)\n");
@@ -386,7 +459,7 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree)
 
         if (c == 'y')
         {
-            return GuessWho(tree);
+            return GuessWho(tree, defender);
         }
         else
         {
@@ -409,6 +482,10 @@ void Play()
 
     char *buffer = nullptr;
     int   status = TreeFill(&tree, stream, &buffer);
+
+    MemoryDefender defender = {};
+
+    DefenderCtor(&defender);
 
     char c = 'p';
     while (c != 'e')
@@ -435,7 +512,8 @@ void Play()
                 break;
 
             default:
-                status |= GuessWho(&tree);
+                status |= GuessWho(&tree, &defender);
+                break;
         }
     }
 
@@ -444,6 +522,8 @@ void Play()
     // status = TreeOut(&tree, "tree_");
 
     // fprintf(stderr, "status = %d\n", status);
+
+    DefenderDtor(&defender);
 
     TreeDtor(&tree);
     free(buffer);
