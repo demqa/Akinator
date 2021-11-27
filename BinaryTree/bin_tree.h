@@ -75,20 +75,20 @@ enum ChildNumeration
     R_CHILD = 1,
 };
 
-TreeStatus TreeCtor(Tree_t *tree);
-TreeStatus TreeIsEmpty(Tree_t *tree);
-
-TreeStatus TreeDtor(Tree_t *tree);
-TreeStatus TreeIsDtored(Tree_t *tree);
-
-TreeStatus NodeInsert(Tree_t *tree, Node_t *node, const ChildNumeration n_child, const Value_t value);
-TreeStatus NodeRemove(Tree_t *tree, Node_t *node);
+TreeStatus TreeCtor      (Tree_t *tree);
+TreeStatus TreeIsEmpty   (Tree_t *tree);
+  
+TreeStatus TreeDtor      (Tree_t *tree);
+TreeStatus TreeIsDtored  (Tree_t *tree);
+  
+TreeStatus NodeInsert    (Tree_t *tree, Node_t *node, const ChildNumeration n_child, const Value_t value);
+TreeStatus NodeRemove    (Tree_t *tree, Node_t *node);
 
 TreeStatus NodeIsTerminal(const Node_t *node);
 
-TreeStatus NodeVerify(const Node_t *node);
-TreeStatus TreeVerify(Tree_t *tree);
-
-TreeStatus TreeDump  (Tree_t *tree);
+TreeStatus NodeVerify    (const Node_t *node);
+TreeStatus TreeVerify    (Tree_t *tree);
+  
+TreeStatus TreeDump      (Tree_t *tree);
 
 #endif

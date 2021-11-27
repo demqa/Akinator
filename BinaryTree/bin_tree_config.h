@@ -2,6 +2,8 @@
 
 #define BIN_TREE_CONFIG_H
 
+#include "../debug_lib.h"
+
 typedef char * Value_t;
 
 // FILE *TREE_LOG_FILE_DEFAULT = stderr;

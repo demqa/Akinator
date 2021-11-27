@@ -8,6 +8,8 @@
 
 #include "BinaryTree/bin_tree.h"
 
+#include "Stack/stack.h"
+
 enum AkinStatus
 {
     // statuses
@@ -16,8 +18,12 @@ enum AkinStatus
     DEAD_INSIDE         = 0,
 
     // errors
+    STACK_IS_RUINED               = 1 << 6,
 
-    BAD_ALLOC_                    = 1 << 9,
+    BAD_ALLOC_                    = 1 << 7,
+
+    INVALID_NODE_PTR              = 1 << 8,
+    NODE_IS_FOUNDED               = 1 << 9,
 
     TREE_IS_NULL_                 = 1 << 10,
     TREE_ROOT_IS_NULL_            = 1 << 11,
@@ -43,9 +49,11 @@ enum AkinStatus
 
     DEFENDER_IS_NULLPTR           = 1 << 27,
 
+    BASE_IS_EMPTY                 = 1 << 28,
+
     FUCK_MY_LIFE                  = 1 << 29,
     PIZDEC                        = 1 << 30,
-    GABELLA                       = 1 << 31,
+    MEMORY_IS_FULL                = 1 << 31,
 };
 
 #endif

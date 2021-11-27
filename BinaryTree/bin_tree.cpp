@@ -20,7 +20,7 @@ Node_t    *DEAD_PTR    = (Node_t *) (1000 - 7);
 size_t     DEAD_SIZE   = 1000 - 7;
 TreeStatus DEAD_STATUS = (TreeStatus) (1000 - 7);
 
-TreeStatus TreeCtor(Tree_t *tree)
+TreeStatus TreeCtor      (Tree_t *tree)
 {
     if (tree == nullptr)
         return TREE_IS_NULL;
@@ -38,7 +38,7 @@ TreeStatus TreeCtor(Tree_t *tree)
     return tree->status;
 }
 
-TreeStatus NodesDtor(Node_t *node)
+TreeStatus NodesDtor     (Node_t *node)
 {
     if (node == nullptr)
         return NODE_PTR_IS_NULL;
@@ -62,7 +62,7 @@ TreeStatus NodesDtor(Node_t *node)
     return (TreeStatus) (status | TREE_IS_DTORED);
 }
 
-TreeStatus TreeDtor(Tree_t *tree)
+TreeStatus TreeDtor      (Tree_t *tree)
 {
     if (tree == nullptr)
         return TREE_IS_NULL;
@@ -76,7 +76,7 @@ TreeStatus TreeDtor(Tree_t *tree)
     return (TreeStatus) status;
 }
 
-TreeStatus TreeIsDtored(Tree_t *tree)
+TreeStatus TreeIsDtored  (Tree_t *tree)
 {
     if (tree == nullptr)
         return TREE_IS_NULL;
@@ -89,7 +89,7 @@ TreeStatus TreeIsDtored(Tree_t *tree)
     return RESULT_IS_UNKNOWN;
 }
 
-TreeStatus TreeIsEmpty(Tree_t *tree)
+TreeStatus TreeIsEmpty   (Tree_t *tree)
 {
     if (tree == nullptr)
         return TREE_IS_NULL;
@@ -102,7 +102,7 @@ TreeStatus TreeIsEmpty(Tree_t *tree)
     return RESULT_IS_UNKNOWN;
 }
 
-TreeStatus NodeInsert(Tree_t *tree, Node_t *node, const ChildNumeration n_child, const Value_t value)
+TreeStatus NodeInsert    (Tree_t *tree, Node_t *node, const ChildNumeration n_child, const Value_t value)
 {
     CATCH_TREE_ERRORS;
 
@@ -119,6 +119,7 @@ TreeStatus NodeInsert(Tree_t *tree, Node_t *node, const ChildNumeration n_child,
     {
         tree->root = new_node;
         tree->size++;
+
         return TREE_IS_OK;
     }
 
@@ -145,7 +146,7 @@ TreeStatus NodeInsert(Tree_t *tree, Node_t *node, const ChildNumeration n_child,
     return NODE_IS_OK;
 }
 
-TreeStatus NodeRemove(Tree_t *tree, Node_t *node)
+TreeStatus NodeRemove    (Tree_t *tree, Node_t *node)
 {
     CATCH_TREE_ERRORS;
     CATCH_NODE_ERRORS;
@@ -195,7 +196,7 @@ TreeStatus NodeIsTerminal(const Node_t *node)
     return RESULT_IS_UNKNOWN;
 }
 
-TreeStatus NodeIsDtored(const Node_t *node)
+TreeStatus NodeIsDtored  (const Node_t *node)
 {
     if (node == nullptr)
         return NODE_PTR_IS_NULL;
@@ -206,7 +207,7 @@ TreeStatus NodeIsDtored(const Node_t *node)
     return RESULT_IS_UNKNOWN;
 }
 
-TreeStatus NodeVerify(const Node_t *node)
+TreeStatus NodeVerify    (const Node_t *node)
 {
     if (NodeIsDtored(node) == NODE_IS_DTORED)
         return NODE_IS_DTORED;
@@ -246,7 +247,7 @@ static TreeStatus NodesVerify(Node_t *node)
     return (TreeStatus) status;
 }
 
-TreeStatus TreeVerify(Tree_t *tree)
+TreeStatus TreeVerify    (Tree_t *tree)
 {
     if (tree == nullptr)
         return TREE_IS_NULL;
@@ -287,7 +288,7 @@ do{                                               \
 
 FILE *TREE_LOG_FILE_DEFAULT = stderr;
 
-static void PrintNode(const Node_t *node, const size_t *number_of_node, const char color[COLOR_MAX_LEN], FILE *dump_file)
+static void PrintNode     (const Node_t *node, const size_t *number_of_node, const char color[COLOR_MAX_LEN], FILE *dump_file)
 {
     if (node == nullptr || number_of_node == nullptr || color == nullptr || dump_file == nullptr)
         return;
@@ -303,7 +304,7 @@ static void PrintNode(const Node_t *node, const size_t *number_of_node, const ch
     return;
 }
 
-static void PrintEdge(const size_t from, const size_t to, const char color[COLOR_MAX_LEN], FILE *dump_file)
+static void PrintEdge     (const size_t from, const size_t to, const char color[COLOR_MAX_LEN], FILE *dump_file)
 {
     if (color == nullptr || dump_file == nullptr)
         return;
