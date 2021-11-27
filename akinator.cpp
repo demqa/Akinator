@@ -540,7 +540,7 @@ AkinStatus DescribeHero(Tree_t *tree, MemoryDefender *defender)
         return TREE_IS_DEAD;
     }
 
-    printf("Чё те там надо было?");
+    printf("Чё те там надо было? ");
     sleep(500);
     printf("Кого найти?\n");
 
@@ -606,6 +606,120 @@ AkinStatus DescribeHero(Tree_t *tree, MemoryDefender *defender)
     return (AkinStatus) status;
 }
 
+AkinStatus CompareHeroes(Tree_t *tree, MemoryDefender *defender)
+{
+    if (TreeVerify(tree))
+    {
+        TreeDump(tree);
+        return TREE_IS_DEAD;
+    }
+
+    printf("Чё те там надо было?");
+    sleep (500);
+    printf(" Кого сравнить?\n");
+
+    char *heroes[2] = {};
+
+    for (int i = 0; i < 2; i++)
+    {
+        printf("Персонаж %d:\n", i + 1);
+
+        int status = GetLine(&heroes[i]);
+        if (status) return (AkinStatus) status;
+
+        if (DefenderIsFull(defender))
+        {
+            free(heroes[i]);
+            return MEMORY_IS_FULL;
+        }
+
+        DefenderPush(defender, heroes[i]);
+    }
+
+    Node_t *nodes[2] = {};
+
+    Stack_t stacks[2] = {};
+    for (int i = 0; i < 2; i++)
+        StackCtor(&stacks[i], 8, PrintString);
+
+    printf("\n");
+
+    int status = NODE_IS_FOUNDED;
+    for (int i = 0; i < 2; i++)
+        status &= FindHero(tree, heroes[i], &nodes[i]);
+
+    if (status == NODE_IS_FOUNDED)
+    {
+        assert(nodes != nullptr);
+
+        for (int i = 0; i < 2; i++)
+            assert(nodes[i] != nullptr);
+
+        for (int i = 0; i < 2; i++)
+            status |= DescribeHeroNode(nodes[i], &stacks[i]);
+
+        for (int i = 0; i < 2; i++)
+            assert(stacks[i].size);
+
+        Node_t **nodess  [2]  = {};
+        size_t   elem    [2]  = {};
+        Node_t  *tmp_node[2]  = {};
+        for (int i = 0; i < 2; i++)
+        {
+            nodess  [i] = (Node_t **) stacks[i].data;
+            elem    [i] = stacks[i].size - 1;
+            tmp_node[i] = nodess[i][elem[i]];
+        }
+
+        int flag = 0;
+        while (tmp_node[0] == tmp_node[1] && tmp_node[0]->right == nodess[0][elem[0]] && tmp_node[1]->right == nodess[1][elem[1]])
+        {   
+            if (flag++ == 0) printf("%s и %s похожи тем, что они ", nodes[0]->value, nodes[1]->value);
+            if (tmp_node[0]->right == nodess[0][elem[0]])
+            {
+                printf("не ");
+            }
+            printf("%s, ", tmp_node[0]->value);
+            
+            if (elem[0] == 0 || elem[1] == 0)
+            {
+                return FUCK_MY_LIFE;
+            }
+
+            for (int i = 0; i < 2; i++)
+                tmp_node[i] = nodess[i][--elem[i]];
+        }
+        
+        if (flag == 0) printf("%s и %s так близки, \n", nodes[0]->value, nodes[1]->value);
+
+        for (int i = 0; i < 2; i++)
+        {
+            if (i == 0)
+                printf("но %s ", nodes[i]->value);
+            else
+                printf("a %s ",  nodes[i]->value);
+
+            do{
+                tmp_node[i] = nodess[i][elem[i]];
+                if (tmp_node[i]->right == nodess[i][elem[i] - 1])
+                    printf("не ");
+                printf("%s, ", tmp_node[i]->value);
+                
+                elem[i]--;
+            }while (elem[i] > 0 && elem[i] != (size_t)(-1));
+
+            printf("а также просто пусечка!\n");
+        }
+    }
+    else
+    {
+        printf("У нас нет таких бойцов!\n");
+    }
+
+    return (AkinStatus) status;
+}
+
+
 void Play()
 {
     FILE *stream = fopen("tree", "rb");
@@ -627,6 +741,8 @@ void Play()
     char c = 'p';
     while (c != 'e')
     {
+        if (status == NODE_IS_FOUNDED) status = FUNC_IS_OK;
+
         if (status)
         {
             TreeDump(&tree);
@@ -634,7 +750,7 @@ void Play()
             break;
         }
 
-        printf("Чё нада? [s]ave/[d]ump/[e]xit/des[c]ription/play\n");
+        printf("Чё нада? [s]ave/[d]ump/[e]xit/desc[r]ibe/[c]ompare/play\n");
         c = getchar();
         getchar();
 
@@ -658,8 +774,12 @@ void Play()
                 printf(" лох\n");
                 break;
 
-            case 'c':
+            case 'r':
                 status |= DescribeHero(&tree, &defender);
+                break;
+
+            case 'c':
+                status |= CompareHeroes(&tree, &defender);
                 break;
 
             default:
