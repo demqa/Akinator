@@ -18,6 +18,8 @@
 
 #define PRINT_D(num) do{ fprintf(stderr, "[%s:%lu] %s = %d\n", __PRETTY_FUNCTION__, __LINE__, #num, num); }while(0);
 
+#define PRINT_X(num) do{ fprintf(stderr, "[%s:%lu] %s = %x\n", __PRETTY_FUNCTION__, __LINE__, #num, num); }while(0);
+
 #define PRINT_SYMBOLS(str, num) do{ fprintf(stderr, "[%d] = %.*s\n", __LINE__, num, str); }while(0);
 
 #endif

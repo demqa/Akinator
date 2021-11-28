@@ -70,6 +70,7 @@ int DefenderCtor  (MemoryDefender *defender)
     if (defender == nullptr) return -1;
 
     defender->allocs   = (char **) calloc(MAX_ALLOCS, sizeof(char *));
+
     defender->capacity = MAX_ALLOCS;
     defender->size     = 0;
 
@@ -82,6 +83,9 @@ int DefenderPush  (MemoryDefender *defender, char *memory)
     
     if (memory   == nullptr) return -2;
 
+    if (defender->size + 1 >= defender->capacity)
+        return -3;
+    
     defender->allocs[defender->size++] = memory;
 
     return 0;
@@ -91,22 +95,24 @@ int DefenderDtor  (MemoryDefender *defender)
 {
     if (defender == nullptr) return -1;
 
+    for (size_t iter = 0; iter < defender->size; iter++)
+    {
+        free(defender->allocs[iter]);
+    }
+
     defender->size = 0;
     defender->capacity = 0;
-
-    for (size_t iter = 0; iter < defender->size; ++iter)
-        free(defender->allocs[iter]);
     
     free(defender->allocs);
 
     return 0;
 }
 
-int DefenderIsFull(MemoryDefender *defender)
+int DefenderIsFull  (MemoryDefender *defender)
 {
     if (defender == nullptr) return -1;
 
-    return (defender->size >= defender->capacity) ? 1 : 0;
+    return (defender->size + 1 >= defender->capacity) ? 1 : 0;
 }
 
 AkinStatus GetString(char **ptr, char *end_ptr, char **string)
@@ -203,16 +209,21 @@ AkinStatus TreeReadProcessing(Tree_t *tree, Node_t *node, char **ptr, char *end_
 
             node = node->parent;
         }
+        else
+        {
+            assert(**ptr == '\n');
+            break;
+        }
     }
     
     return DEAD_INSIDE;
 }
 
-AkinStatus TreeRead(Tree_t *tree, char *buffer, size_t buff_size)
+AkinStatus TreeRead (Tree_t *tree, char *buffer, size_t buff_size)
 {
     if (tree == nullptr)   return TREE_IS_NULL_;
 
-    if (buffer == nullptr) return BUFFER_IS_NULLPTR;
+    if (buffer == nullptr) return BUFFER_IS_NULL;
 
     if (buff_size == 0)    return FILESIZE_IS_ZERO;
 
@@ -244,7 +255,7 @@ AkinStatus TreeRead(Tree_t *tree, char *buffer, size_t buff_size)
     return FUNC_IS_OK;
 }
 
-AkinStatus TreeFill(Tree_t *tree, FILE *stream, char **buff)
+AkinStatus TreeFill (Tree_t *tree, FILE *stream, char **buff)
 {
     if (tree == nullptr)   return TREE_IS_NULL_;
 
@@ -269,7 +280,7 @@ AkinStatus TreeFill(Tree_t *tree, FILE *stream, char **buff)
     return FUNC_IS_OK;
 }
 
-AkinStatus NodesOut(Node_t *node, FILE *stream)
+AkinStatus NodesOut (Node_t *node, FILE *stream)
 {
     if (stream == nullptr) return STREAM_IS_NULL;
 
@@ -288,7 +299,7 @@ AkinStatus NodesOut(Node_t *node, FILE *stream)
     return (AkinStatus) status;
 }
 
-AkinStatus TreeOut(Tree_t *tree, const char *out_filename)
+AkinStatus TreeOut  (Tree_t *tree, const char *out_filename)
 {
     if (TreeVerify(tree))
     {
@@ -314,7 +325,7 @@ AkinStatus TreeOut(Tree_t *tree, const char *out_filename)
     return (AkinStatus) status;
 }
 
-AkinStatus GetLine(char **string)
+AkinStatus GetLine  (char **string)
 {
     if (string  == nullptr) return PTR_IS_NULL;
 
@@ -348,7 +359,21 @@ AkinStatus GetLine(char **string)
     return DEAD_INSIDE;
 }
 
-AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
+AkinStatus GetChar  (char *ans)
+{
+    if (ans == nullptr) return PTR_IS_NULL;
+
+    char x = 0;
+    do
+    {
+        *ans = x;
+        x = getchar();
+    } while (x != '\n');
+
+    return FUNC_IS_OK;
+}
+
+AkinStatus GuessHero(Tree_t *tree, MemoryDefender *defender)
 {
     if (TreeVerify(tree))
     {
@@ -356,7 +381,7 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
         return TREE_IS_DEAD;
     }
 
-    if (defender == nullptr) return DEFENDER_IS_NULLPTR;
+    if (defender == nullptr) return DEFENDER_IS_NULL;
 
     int status = FUNC_IS_OK;
 
@@ -374,8 +399,8 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
     {
         printf("Ваш персонаж %s?([y]es/[*]no)\n", node->value);
 
-        char c = getchar();
-        getchar();
+        char c = 0;
+        GetChar(&c);
 
         if (c == 'y')
             node = node->left;
@@ -390,8 +415,8 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
 
     printf("Это %s?([y]es/[*]no)\n", node->value);
 
-    char c = getchar();
-    getchar();
+    char c = 0;
+    GetChar(&c);
 
     if (c == 'y')
     {
@@ -418,6 +443,9 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
         if (DefenderIsFull(defender))
         {
             free(node_left_string);
+            printf("Ну ты либо сохраняйся, либо иди лесом! Я не могу запомнить сразу так много!\n");
+            fflush(stdout);
+
             return MEMORY_IS_FULL;
         }
 
@@ -433,7 +461,8 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
         if (DefenderIsFull(defender))
         {
             free(characteristic);
-            printf("Ну ты либо сохраняйся, либо иди лесом! Я не могу запомнить сразу так много!");
+            printf("Ну ты либо сохраняйся, либо иди лесом! Я не могу запомнить сразу так много!\n");
+            fflush(stdout);
 
             return MEMORY_IS_FULL;
         }
@@ -451,12 +480,12 @@ AkinStatus GuessWho/*is back*/(Tree_t *tree, MemoryDefender *defender)
         printf("Так уж и быть... даю тебе еще попытку...\n");
         printf("Воспользоваться?(y/n)\n");
 
-        c = getchar();
-        getchar();
+        c = 0;
+        GetChar(&c);
 
         if (c == 'y')
         {
-            return GuessWho(tree, defender);
+            return GuessHero(tree, defender);
         }
         else
         {
@@ -552,6 +581,9 @@ AkinStatus DescribeHero(Tree_t *tree, MemoryDefender *defender)
     if (DefenderIsFull(defender))
     {
         free(hero);
+        printf("Ну ты либо сохраняйся, либо иди лесом! Я не могу запомнить сразу так много!\n");
+        fflush(stdout);
+
         return MEMORY_IS_FULL;
     }
     
@@ -603,6 +635,8 @@ AkinStatus DescribeHero(Tree_t *tree, MemoryDefender *defender)
         printf("У нас нет такого бойца!\n");
     }
 
+    StackDtor(&stack);
+
     return (AkinStatus) status;
 }
 
@@ -630,6 +664,9 @@ AkinStatus CompareHeroes(Tree_t *tree, MemoryDefender *defender)
         if (DefenderIsFull(defender))
         {
             free(heroes[i]);
+            printf("Ну ты либо сохраняйся, либо иди лесом! Я не могу запомнить сразу так много!\n");
+            fflush(stdout);
+
             return MEMORY_IS_FULL;
         }
 
@@ -664,6 +701,7 @@ AkinStatus CompareHeroes(Tree_t *tree, MemoryDefender *defender)
         Node_t **nodess  [2]  = {};
         size_t   elem    [2]  = {};
         Node_t  *tmp_node[2]  = {};
+
         for (int i = 0; i < 2; i++)
         {
             nodess  [i] = (Node_t **) stacks[i].data;
@@ -715,10 +753,42 @@ AkinStatus CompareHeroes(Tree_t *tree, MemoryDefender *defender)
     {
         printf("У нас нет таких бойцов!\n");
     }
+    
+    for (int i = 0; i < 2; ++i)
+        StackDtor(&stacks[i]);
 
     return (AkinStatus) status;
 }
 
+AkinStatus Reload(Tree_t *tree, FILE **stream, char **buffer, MemoryDefender *defender)
+{
+    if (TreeVerify(tree))                          return TREE_IS_DEAD;
+    if (stream   == nullptr || *stream == nullptr) return STREAM_IS_NULL;
+    if (buffer   == nullptr || *buffer == nullptr) return BUFFER_IS_NULL;
+    if (defender == nullptr)                       return DEFENDER_IS_NULL;
+
+    int status = FUNC_IS_OK;
+
+    status |= TreeOut(tree, "tree");
+
+    free  (*buffer);
+    DefenderDtor(defender);
+
+    TreeDtor(tree);
+
+    *stream = fopen("tree", "r");
+    if (*stream == nullptr) return CANT_OPEN_FILE;
+
+    *buffer = nullptr;
+
+    TreeCtor(tree);
+
+    status |= TreeFill(tree, *stream, buffer);
+
+    DefenderCtor(defender);
+
+    return (AkinStatus) status;
+}
 
 void Play()
 {
@@ -743,24 +813,24 @@ void Play()
     {
         if (status == NODE_IS_FOUNDED) status = FUNC_IS_OK;
 
-        if (status)
+        if (status && (status & MEMORY_IS_FULL) == 0)
         {
             TreeDump(&tree);
             fprintf(stderr, "status = %d\n", status);
             break;
         }
 
-        printf("Чё нада? [s]ave/[d]ump/[e]xit/desc[r]ibe/[c]ompare/play\n");
-        c = getchar();
-        getchar();
+        status &= ~MEMORY_IS_FULL;
+
+        printf("Чё нада? [s]ave/play/desc[r]ibe/[c]ompare/[d]ump/[e]xit\n");
+
+        status |= GetChar(&c);
+        if (status) break;
 
         switch (c)
         {
             case 's':
-                TreeOut(&tree, "tree");
-                DefenderDtor(&defender);
-                TreeFill(&tree, stream, &buffer);
-                DefenderCtor(&defender);
+                status |= Reload(&tree, &stream, &buffer, &defender);
                 break;
 
             case 'd':
@@ -783,21 +853,16 @@ void Play()
                 break;
 
             default:
-                status |= GuessWho(&tree, &defender);
+                status |= GuessHero(&tree, &defender);
                 break;
         }
     }
 
-    // TreeDump(&tree);
-
-    // status = TreeOut(&tree, "tree_");
-
-    // fprintf(stderr, "status = %d\n", status);
-
     DefenderDtor(&defender);
 
     TreeDtor(&tree);
-    free(buffer);
+
+    free  (buffer);
 }
 
 int main()

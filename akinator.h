@@ -30,7 +30,7 @@ enum AkinStatus
     NODE_PTR_IS_NULL_             = 1 << 12,
 
     STREAM_IS_NULL                = 1 << 13,
-    BUFFER_IS_NULLPTR             = 1 << 14,
+    BUFFER_IS_NULL                = 1 << 14,
     FILESIZE_IS_ZERO              = 1 << 15,
     BUFFER_CANT_BE_READ           = 1 << 16,
     EXPR_IS_INVALID               = 1 << 17,
@@ -47,7 +47,7 @@ enum AkinStatus
 
     TREE_IS_DEAD                  = 1 << 26,
 
-    DEFENDER_IS_NULLPTR           = 1 << 27,
+    DEFENDER_IS_NULL              = 1 << 27,
 
     BASE_IS_EMPTY                 = 1 << 28,
 

@@ -25,10 +25,10 @@ TreeStatus TreeCtor      (Tree_t *tree)
     if (tree == nullptr)
         return TREE_IS_NULL;
 
-    if (TreeIsEmpty(tree))
+    if (TreeIsEmpty(tree) == TREE_IS_EMPTY)
         return TREE_IS_OK;
 
-    if (!TreeIsDtored(tree))
+    if (TreeIsDtored(tree) != TREE_IS_DTORED)
         return TREE_IS_NOT_EMPTY;
 
     tree->root   = nullptr;
@@ -67,9 +67,9 @@ TreeStatus TreeDtor      (Tree_t *tree)
     if (tree == nullptr)
         return TREE_IS_NULL;
 
-    int status = NodesDtor(tree->root);
+    int status   = NodesDtor(tree->root);
 
-    tree->root   = DEAD_PTR;
+    tree->root   = nullptr;
     tree->size   = DEAD_SIZE;
     tree->status = DEAD_STATUS;
 
@@ -81,7 +81,7 @@ TreeStatus TreeIsDtored  (Tree_t *tree)
     if (tree == nullptr)
         return TREE_IS_NULL;
 
-    if (tree->root   == DEAD_PTR    &&
+    if (tree->root   == nullptr     &&
         tree->size   == DEAD_SIZE   &&
         tree->status == DEAD_STATUS)
         return TREE_IS_DTORED;
@@ -365,6 +365,8 @@ TreeStatus TreeDump(Tree_t *tree)
         fprintf(TREE_LOG_FILE_DEFAULT, "CANT DUMP, TREE IS RUINED\n");
         
         PRINT_ERROR(BAD_ALLOC);
+
+        PRINT_ERROR(TREE_IS_DTORED);
 
         PRINT_ERROR(TREE_IS_NULL);
         PRINT_ERROR(TREE_ROOT_IS_NULL);
